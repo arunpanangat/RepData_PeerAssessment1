@@ -1,25 +1,122 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research - Assignment 1"
+author: "Arun Panangatt"
+date: "14 May 2015"
+output: html_document
 ---
+## Overarching settings
+```{r}
+echo = TRUE ### to make all code visible
+library(ggplot2)
+
+```
+## Loading data and pre-processing
+```{r}
+data <- read.table('activity.csv',sep = ",",header = TRUE, na.strings ="NA",
+                   colClasses = c('integer','Date','factor'))
+```
+### To clear rows with NA
+```{r}
+new.data <- na.omit(data)
+```
+###  Plot of total number of steps taken per day
+```{r}
+total.steps <- tapply(new.data$steps, new.data$date, FUN = sum)
+plot1 <- ggplot(new.data, aes(date, steps)) + geom_bar(stat = "identity",fill='red',binwidth = .5) +
+        labs(title = " Total Number of Steps Taken Each Day",x = "Date", y = " Number of Steps")
+print(plot1)
+```
 
 
-## Loading and preprocessing the data
+### Mean and Median of the total numberof steps taken per day
+```{r}
+summary(total.steps)
+```
+
+### Average daily actitivy pattern plot
+```{r}
+averages <- aggregate(new.data$steps, list(interval = as.numeric(as.character(new.data$interval))), FUN = "mean")
+names(averages)[2] <- "Avg.Steps"
+
+plot2 <- ggplot(averages, aes(interval, Avg.Steps)) + geom_line(color = "black", size = 0.7) + labs(title = "Time Series Plot : 5-minute Intervals", x = "5-minute intervals", y = "Average Number of Steps Taken")
+print(plot2)
+```
+
+### 5 minute interval with the highest average number of steps
+```{r}
+averages[averages$Avg.Steps == max(averages$Avg.Steps),]
+```
+
+### Interval named 835 with 206 steps at index position 104 is the highest.
+
+### Imputing missing values
+
+### Total number of incomplete cases
+
+```{r}
+sum(!complete.cases(data))
+```
+
+
+### Imputing missing values with mean for 5 minute interval
+
+```{r}
+impData <- data 
+for (i in 1:nrow(impData)) {
+    if (is.na(impData$steps[i])) {
+        impData$steps[i] <- averages[which(impData$interval[i] == averages$interval), ]$Avg.Steps
+    }
+}
+```
+
+### Verification of missing values having been filled in
+
+```{r}
+sum(!complete.cases(impData))
+```
+
+
+### Histogram with imputed data
+```{r}
+plot3 <- ggplot(impData, aes(date, steps)) + geom_bar(stat = "identity", fill="red",binwidth = .5) +
+    labs(title = "Total Number of Steps Taken Each Day (Imputed Data)",x = "Date", y = " Number of Steps")
+print(plot3)
+```
+### Calculation of mean and median of imputed data
+```{r}
+totalsteps.impute <- tapply(impData$steps, impData$date, FUN = sum)
+summary(totalsteps.impute)
+```
+
+### It can be noted that the Median has increased in the imputed data , but the Mean remanins the same
+
+### Differences in activity patterns between Weekdays and Weekends
+
+### Creation of new variable indicating whether a given date is Weekday or Weekend
+```{r}
+impData$weekdays <- factor(format(impData$date, "%A"))
+levels(impData$weekdays)
+```
+```{r}
+levels(impData$weekdays) <- list(weekday = c("Monday", "Tuesday",
+                                             "Wednesday", 
+                                             "Thursday", "Friday"),
+                                 weekend = c("Saturday", "Sunday"))
+levels(impData$weekdays)
+```
+### Graph containing  time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
+```{r}
+new.averages <- aggregate(impData$steps, 
+                      list(interval = as.numeric(as.character(impData$interval)), 
+                           weekdays = impData$weekdays),
+                      FUN = "mean")
+names(new.averages)[3] <- "meanOfSteps"
+library(lattice)
+plot4 <- xyplot(new.averages$meanOfSteps ~ new.averages$interval | new.averages$weekdays, 
+       layout = c(1, 2), type = "l", 
+       xlab = "Interval", ylab = "Number of steps")
+print(plot4)
+```
 
 
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
