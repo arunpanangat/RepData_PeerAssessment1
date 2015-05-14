@@ -117,6 +117,10 @@ plot4 <- xyplot(new.averages$meanOfSteps ~ new.averages$interval | new.averages$
        xlab = "Interval", ylab = "Number of steps")
 print(plot4)
 ```
+### Difference between Weekdays and Weekends
+```{r}
+table(impData$weekdays)
+```
 
 
 
